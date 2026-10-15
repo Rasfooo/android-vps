@@ -133,7 +133,7 @@ su -c 'nano /data/adb/service.d/hp-vps.sh'
 until [ "$(getprop sys.boot_completed)" = "1" ]; do sleep 2; done
 sleep 10
 
-# Charge limit (see docs/baterai.md)
+# Charge limit (see docs/en/battery.md)
 nohup sh /data/adb/battery-limit.sh >/dev/null 2>&1 &
 
 # Run your service inside proot/chroot

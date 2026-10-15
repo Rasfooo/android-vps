@@ -63,7 +63,31 @@ BROKEN=$(while IFS= read -r f; do
 done < <(find docs -name '*.md') | wc -l | tr -d ' ')
 if [ "${BROKEN:-0}" -eq 0 ]; then ok "semua link lokal valid"; else bad "$BROKEN link rusak"; fi
 
-printf '\n%s\n' "${B}4. Pasangan Bahasa Indonesia ↔ Inggris${N}"
+printf '\n%s\n' "${B}4. Nama file bahasa bercampur${N}"
+# Referensi nama file di dalam komentar/blok kode juga harus memakai bahasa
+# halaman itu. Bug nyata: docs/en/autostart.md sempat menunjuk docs/baterai.md,
+# yang tidak ada di versi Inggris (namanya battery.md).
+MIXED=0
+while IFS= read -r f; do
+  d=$(dirname "$f")
+  # Versi EN tidak boleh menyebut nama file Indonesia
+  if [ "$d" = "docs/en" ]; then
+    if grep -qE 'jalur-[a-z0-9-]+\.md|baterai\.md' "$f" 2>/dev/null; then
+      bad "$f menyebut nama file versi Indonesia"
+      MIXED=$((MIXED + 1))
+    fi
+  fi
+  # Versi ID tidak boleh menyebut nama file Inggris
+  if [ "$d" = "docs/id" ]; then
+    if grep -qE 'path-[ab][0-9]?-?[a-z-]*\.md|battery\.md' "$f" 2>/dev/null; then
+      bad "$f menyebut nama file versi Inggris"
+      MIXED=$((MIXED + 1))
+    fi
+  fi
+done < <(find docs -name '*.md' | sort)
+[ "$MIXED" -eq 0 ] && ok "tidak ada nama file bercampur bahasa"
+
+printf '\n%s\n' "${B}5. Pasangan Bahasa Indonesia ↔ Inggris${N}"
 for pair in "baterai.md:battery.md" "tunnel.md:tunnel.md" "autostart.md:autostart.md" \
             "hardening.md:hardening.md" "benchmark.md:benchmark.md" "hardware.md:hardware.md" \
             "jalur-a-tanpa-root.md:path-a-nonroot.md" "jalur-b1-magisk.md:path-b1-magisk.md" \
@@ -80,7 +104,7 @@ for pair in "baterai.md:battery.md" "tunnel.md:tunnel.md" "autostart.md:autostar
   fi
 done
 
-printf '\n%s\n' "${B}5. Perintah kritis ada di kedua bahasa${N}"
+printf '\n%s\n' "${B}6. Perintah kritis ada di kedua bahasa${N}"
 CMDS="pmbootstrap init|pmbootstrap install|fastboot flash boot|docker compose version|apk add openssh docker|acc -s pc=80|cloudflared tunnel|rc-update add|systemctl enable|nftables|termux-wake-lock|udocker|proot-distro install|charge_full_design|sys.boot_completed|docker.service|restart: unless-stopped|fail2ban|tailscale"
 IFS='|'
 for c in $CMDS; do
@@ -96,7 +120,7 @@ for c in $CMDS; do
 done
 unset IFS
 
-printf '\n%s\n' "${B}6. Tabel isi repo di README${N}"
+printf '\n%s\n' "${B}7. Tabel isi repo di README${N}"
 for s in scripts/benchmark.sh scripts/healthcheck.sh scripts/expose-tunnel.sh scripts/battery-limit.sh; do
   if grep -q "$(basename "$s")" README.md; then ok "$(basename "$s") terdaftar"; else warn "$(basename "$s") tidak disebut di README"; fi
 done
